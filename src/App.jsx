@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, LayoutGrid, Smile, Heart, User } from 'lucide-react';
 
+// Import Konfigurasi & Data
 import { supabase } from './supabaseClient';
 import { MOOD_ICONS } from './constants';
 
+// Import Halaman dari folder pages
 import Home from './pages/Home.jsx';
 import Categories from './pages/Categories.jsx';
 import Moods from './pages/Moods.jsx';
@@ -14,44 +16,45 @@ import About from './pages/About.jsx';
 import SplashScreen from './pages/SplashScreen.jsx';
 
 export default function App() {
+  // --- STATE ---
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedParam, setSelectedParam] = useState(null);
   const [dailyQuote, setDailyQuote] = useState(null);
   const [dataList, setDataList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading state global
   const [favorites, setFavorites] = useState([]);
   
   // State Riwayat Navigasi
   const [navHistory, setNavHistory] = useState([{ page: 'home', param: null }]);
 
+  // --- EFFECT: Load Favorites ---
   useEffect(() => {
     const savedFavs = JSON.parse(localStorage.getItem('favQuotes')) || [];
     setFavorites(savedFavs);
   }, []);
 
-  // --- NAVIGASI MAJU ---
+  // --- NAVIGATION LOGIC ---
   const navigate = (page, param = null) => {
     window.scrollTo(0, 0);
+
     const rootPages = ['home', 'categories', 'moods', 'favorites', 'about'];
 
     if (rootPages.includes(page)) {
-      setNavHistory([{ page, param }]); // Reset jika ke menu utama
+      // Jika pindah ke menu utama, reset riwayat
+      setNavHistory([{ page, param }]);
     } else {
-      setNavHistory(prev => [...prev, { page, param }]); // Tumpuk jika ke sub-halaman
+      // Jika masuk ke sub-halaman (detail), tambahkan ke riwayat
+      setNavHistory(prev => [...prev, { page, param }]);
     }
 
     setCurrentPage(page);
     setSelectedParam(param);
   };
 
-  // --- NAVIGASI MUNDUR (LOGIC DIPERKUAT) ---
+  // --- GO BACK LOGIC ---
   const goBack = () => {
-    console.log("Tombol Kembali ditekan. History saat ini:", navHistory);
-
     if (navHistory.length > 1) {
-      // Ambil semua kecuali yang terakhir
       const newHistory = navHistory.slice(0, -1);
-      // Ambil halaman paling belakang yang baru
       const prevPage = newHistory[newHistory.length - 1];
 
       if (prevPage) {
@@ -60,11 +63,10 @@ export default function App() {
         setSelectedParam(prevPage.param);
         window.scrollTo(0, 0);
       } else {
-        navigate('home'); // Fallback ke Home
+        navigate('home');
       }
     } else {
-      console.log("History kosong, kembali ke Home");
-      navigate('home'); // Fallback ke Home
+      navigate('home');
     }
   };
 
@@ -82,10 +84,11 @@ export default function App() {
 
   const isFavorite = (id) => favorites.some(f => f.id === id);
 
-  // --- FETCH DATA ---
+  // --- DATA FETCHING LOGIC ---
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      
       try {
         if (currentPage === 'home') {
           const { data } = await supabase.from('quotes').select('*');
@@ -97,6 +100,8 @@ export default function App() {
           }
         } 
         else if (currentPage === 'categories') {
+          // 🔥 PERBAIKAN STABILITAS: Reset dataList saat masuk ke root page
+          setDataList([]); 
           const { data } = await supabase.from('quotes').select('category');
           if (data) {
             const uniqueCats = [...new Set(data.map(q => q.category))];
@@ -104,6 +109,8 @@ export default function App() {
           }
         }
         else if (currentPage === 'moods') {
+          // 🔥 PERBAIKAN STABILITAS: Reset dataList saat masuk ke root page
+          setDataList([]); 
           const { data } = await supabase.from('quotes').select('mood');
           if (data) {
             const uniqueMoods = [...new Set(data.map(q => q.mood))];
@@ -119,23 +126,25 @@ export default function App() {
           setDataList(data || []);
         }
         else if (currentPage === 'detail') {
-          // Jika dailyQuote sudah ada dan ID-nya sama, pakai yang ada (hemat API)
-          if (!dailyQuote || dailyQuote.id !== selectedParam) {
-             const { data } = await supabase.from('quotes').select('*').eq('id', selectedParam).single();
-             if(data) setDailyQuote(data);
-          }
+          const { data } = await supabase.from('quotes').select('*').eq('id', selectedParam).single();
+          if(data) setDailyQuote(data);
         }
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error fetching data:", err);
       } finally {
-        setTimeout(() => setLoading(false), 500);
+        setTimeout(() => setLoading(false), 800);
       }
     };
 
-    fetchData();
+    // Hanya fetch jika tidak sedang berada di halaman yang datanya sudah siap
+    if (!['favorites', 'about'].includes(currentPage)) {
+        fetchData();
+    } else {
+        setLoading(false);
+    }
   }, [currentPage, selectedParam]);
 
-  // --- RENDER CONTENT ---
+  // Render Content Helper
   const renderContent = () => {
     if (loading) return <SplashScreen />;
 
@@ -143,7 +152,7 @@ export default function App() {
     if (currentPage === 'categories') return <Categories dataList={dataList} onNavigate={navigate} />;
     if (currentPage === 'moods') return <Moods dataList={dataList} onNavigate={navigate} />;
     
-    // NAVIGASI LIST: Back -> Kembali ke Menu Utama
+    // NAVIGASI LIST: Gunakan navigasi eksplisit ke halaman induk
     if (currentPage === 'category-detail') {
       return <QuoteList title={`Kategori: ${selectedParam}`} dataList={dataList} onNavigate={navigate} onBack={() => navigate('categories')} />;
     }
@@ -152,7 +161,7 @@ export default function App() {
       return <QuoteList title={`Mood: ${selectedParam} ${MOOD_ICONS[selectedParam] || ''}`} dataList={dataList} onNavigate={navigate} onBack={() => navigate('moods')} />;
     }
     
-    // NAVIGASI DETAIL: Back -> Gunakan goBack (Mundur 1 langkah)
+    // NAVIGASI DETAIL: Gunakan goBack
     if (currentPage === 'detail') {
       return <QuoteDetail quote={dailyQuote} toggleFavorite={toggleFavorite} isFavorite={isFavorite} onBack={goBack} />;
     }
@@ -163,6 +172,7 @@ export default function App() {
     return null;
   };
 
+  // --- RENDER UTAMA ---
   return (
     <div className="text-gray-800 h-screen flex flex-col overflow-hidden bg-gray-50 font-sans">
       <header className="bg-black text-white p-4 shadow-md z-20 flex justify-between items-center">
@@ -193,6 +203,7 @@ export default function App() {
         ))}
       </nav>
 
+      {/* Global Styles */}
       <style>{`
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; }
