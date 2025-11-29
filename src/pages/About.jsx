@@ -16,8 +16,8 @@ export default function About() {
       <div className="bg-white w-full rounded-xl shadow-sm p-6 mb-6">
         <h3 className="font-bold text-gray-700 mb-4 border-b pb-2">Tentang Aplikasi</h3>
         <p className="text-sm text-gray-600 leading-relaxed">
-          Daily Quotes adalah aplikasi Progressive Web App (PWA) modern yang dirancang untuk menemani hari-hari Anda dengan inspirasi tanpa batas. 
-          Aplikasi ini dibangun ulang menggunakan React.js dan Vite untuk performa maksimal, serta terintegrasi dengan Supabase untuk data real-time.
+          Daily Quotes adalah aplikasi Progressive Web App (PWA) modern berbasis React.js dan Vite yang dirancang untuk menjadi sumber inspirasi harian Anda. 
+          Aplikasi ini tidak hanya menyajikan kutipan bijak yang diperbarui secara otomatis setiap hari, tetapi juga menawarkan pengalaman yang dipersonalisasi melalui fitur filter berdasarkan Kategori dan Suasana Hati (Mood), memungkinkan pengguna menemukan motivasi yang relevan dengan perasaan mereka saat ini. Didukung oleh integrasi Cloud Database Supabase untuk sinkronisasi data real-time serta kemampuan akses offline yang handal, Daily Quotes memastikan asupan positif dan semangat tetap tersedia kapan saja dan di mana saja tanpa hambatan koneksi.
         </p>
       </div>
 
@@ -30,8 +30,9 @@ export default function About() {
             <User className="text-gray-600 w-5 h-5" />
           </div>
           <div>
-            <p className="text-sm font-bold">Mahasiswa TI</p>
-            <p className="text-xs text-gray-500">Pengembang Web</p>
+            <p className="text-sm font-bold">Pengembang PWA</p>
+            <p className="text-xs text-gray-500">Anisa Anastasya 
+                21120123130080</p>
           </div>
         </div>
         
